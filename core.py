@@ -1,5 +1,6 @@
 from flask import Flask
 import os
+from blueprints import user
 
 def create_app(config=None):
     app = Flask(__name__)
@@ -15,4 +16,7 @@ def create_app(config=None):
     )
     if config:
         app.config.from_mapping(**config)
+
+    # NOTE register blueprints
+    app.register_blueprint(user.bp)
     return app

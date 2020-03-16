@@ -1,11 +1,15 @@
-from flask import Blueprint, abort, request, jsonify, make_response
+from flask import Blueprint, abort, request, make_response
 from datetime import datetime
 import models
+from . import user_schema_insert, user_schema_update
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
 
 #############################################################################
 #                                 VARIABLES                                 #
 #############################################################################
 bp = Blueprint('user', __name__)
+
 
 #############################################################################
 #                             HELPER FUNCTIONS                              #
@@ -13,9 +17,11 @@ bp = Blueprint('user', __name__)
 def jsonify_user(user):
     fmt_str = '%Y-%m-%d %H:%M:%S'
     return {
+        'id': user.id,
         'name': user.name,
         'username': user.username,
         'active': user.active,
+        'admin': user.admin,
         'created_at': None if not user.created_at else datetime.strftime(user.created_at, fmt_str),
         'removed_at': None if not user.removed_at else datetime.strftime(user.removed_at, fmt_str),
         'updated_at': None if not user.updated_at else datetime.strftime(user.updated_at, fmt_str),
@@ -27,6 +33,13 @@ def return_no_content():
     res = make_response('', 204)
     return res
 
+
+def validate_instance(body, schema):
+    try:
+        validate(instance=body, schema=schema)
+    except ValidationError as err:
+        print(f'Erro na instancia de usuario recebida: {err.message}')
+        abort(400)
 
 #############################################################################
 #                                  ROUTES                                   #
@@ -57,7 +70,21 @@ def getAll():
 
 @bp.route('/users', methods=["POST"])
 def insert():
-    pass
+    user_body = request.json
+    validate_instance(body=user_body, schema=user_schema_insert)
+    password = user_body.get('password')
+    user = models.User()
+    user.username = user_body.get('username')
+    user.name = user_body.get('name')
+    user.password = models.User.hash_password(password)
+    models.db.session.add(user)
+    try:
+        models.db.session.commit()
+        return return_no_content()
+    except Exception as err:
+        print(f'Erro ao inserir usuario: {err}')
+        models.db.session.rollback()
+        abort(409)
 
 
 @bp.route('/users/<string:user_id>', methods=["GET"])
@@ -70,7 +97,21 @@ def getOne(user_id):
 
 @bp.route('/users/<string:user_id>', methods=["PUT"])
 def update(user_id):
-    pass
+    user_body = request.json
+    validate_instance(body=user_body, schema=user_schema_update)
+    user = models.User.query.get(user_id)
+    if not user:
+        abort(404)
+    user.username = user_body.get('username')
+    user.name = user_body.get('name')
+    models.db.session.add(user)
+    try:
+        models.db.session.commit()
+        return return_no_content()
+    except Exception as err:
+        print(f'Erro ao inserir usuario: {err}')
+        models.db.session.rollback()
+        abort(409)
 
 
 @bp.route('/users/<string:user_id>', methods=["DELETE"])
@@ -79,7 +120,7 @@ def remove(user_id):
     if not user:
         abort(404)
     user.removed = True
-    removed.removed_at = datetime.utcnow()
+    user.removed_at = datetime.utcnow()
     models.db.session.add(user)
     try:
         models.db.session.commit()

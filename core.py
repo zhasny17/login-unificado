@@ -3,6 +3,7 @@ import os
 from blueprints import user
 import models
 
+
 def create_app(config=None):
     app = Flask(__name__)
     app.config.from_mapping(
@@ -23,7 +24,7 @@ def create_app(config=None):
 
     # NOTE register blueprints
     app.register_blueprint(user.bp)
-    
+
     models.db.create_all(app=app)
 
     @app.after_request

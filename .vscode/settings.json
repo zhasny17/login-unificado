@@ -1,0 +1,18 @@
+{
+    "python.pythonPath": "/home/fortal-desktop2/.pyenv/shims/python",
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true,
+    "python.linting.flake8Args": [
+        "--max-line-length=190",
+        "--ignore=F401,E128,E402,F811",
+    ],
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "git.ignoreLimitWarning": true,
+    
+}

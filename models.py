@@ -20,9 +20,12 @@ class User(db.Model):
     __table_args__ = (
         tables_config
     )
+    __tablename__ = 'users'
 
     @staticmethod
     def hash_password(password):
+        if not password:
+            return None
         return hashlib.sha256(password.encode()).hexdigest()
 
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
@@ -41,15 +44,15 @@ class AccessToken(db.Model):
     __table_args__ = (
         tables_config
     )
-    __tablename__ = 'access_token'
+    __tablename__ = 'access_tokens'
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    valid = db.Column(db.Boolean, nullable=False, default=False)
-    expiration_date = db.Column(db.DateTime, nullable=False)
-    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship("User", backref=db.backref("access_token", lazy=True))
-    refresh_token_id = db.Column(db.String(36), db.ForeignKey('refresh_token.id'), nullable=False)
-    refresh_token = db.relationship("RefreshToken", backref=db.backref("access_token", lazy=True))
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    valid = db.Column(db.Boolean, nullable=False, default=True)
+    expiration_date = db.Column(db.DateTime(timezone=True), nullable=False)
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('access_tokens', lazy=True))
+    refresh_token_id = db.Column(db.String(36), db.ForeignKey('refresh_tokens.id'), nullable=False)
+    refresh_token = db.relationship('RefreshToken', backref=db.backref('access_tokens', lazy=True))
 
     def has_expired(self, when=None):
         if datetime.utcnow() >= self.expiration_date:
@@ -61,17 +64,17 @@ class AccessToken(db.Model):
         return self.valid and not self.has_expired()
 
 
-class RefreshTokens(db.Model):
+class RefreshToken(db.Model):
     __table_args__ = (
         tables_config
     )
-    __tablename__ = 'refresh_token'
+    __tablename__ = 'refresh_tokens'
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    valid = db.Column(db.Boolean, nullable=False, default=False)
-    expiration_date = db.Column(db.DateTime, nullable=False)
-    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship("User", backref=db.backref("refresh_token", lazy=True))
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    valid = db.Column(db.Boolean, nullable=False, default=True)
+    expiration_date = db.Column(db.DateTime(timezone=True), nullable=False)
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('refresh_tokens', lazy=True))
 
     def has_expired(self):
         if datetime.utcnow() >= self.expiration_date:

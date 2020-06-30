@@ -34,5 +34,26 @@
             "username",
             "name"
         ]
+    },
+    "login_schema": {
+        "type": "object",
+        "properties": {
+            "username": {
+                "type": "string"
+            },
+            "password": {
+                "type": "string"
+            },
+            "refresh_token": {
+                "type": "string"
+            },
+            "grant_type": {
+                "type": "string"
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "grant_type"
+        ]
     }
 }

@@ -1,6 +1,6 @@
 from flask import Flask
 import os
-from blueprints import user
+from blueprints import user, login
 import models
 
 
@@ -24,8 +24,9 @@ def create_app(config=None):
 
     # NOTE register blueprints
     app.register_blueprint(user.bp)
+    app.register_blueprint(login.bp)
 
-    models.db.create_all(app=app)
+    # models.db.create_all(app=app)
 
     @app.after_request
     def after_request(response):

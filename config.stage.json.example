@@ -3,5 +3,9 @@
     "DB_USERNAME": "",
     "DB_PASSWORD": "",
     "DB_HOST": "",
-    "DB_NAME": ""
+    "DB_NAME": "",
+    "RT_EXPIRATION": "",
+    "AT_EXPIRATION": "",
+    "JWT_EXPIRATION": "",
+    "JWT_SECRET": ""
 }

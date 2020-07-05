@@ -1,0 +1,53 @@
+service:
+  name: ${opt:cfg}-login
+
+plugins:
+  - serverless-python-requirements
+  - serverless-wsgi
+custom:
+  wsgi:
+    app: app.app
+    packRequirements: false
+  pythonRequirements:
+    dockerizePip: non-linux
+    layer: true
+    slim: true
+    strip: false
+
+package:
+  exclude:
+    - .vscode/**
+    - venv/**
+    - node_modules/**
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: ${opt:cfg}
+  region: ${opt:region, 'us-east-1'}
+  memorySize: 256
+  timeout: 30
+  environment:
+    DB_CONNECTOR: ${file(config.${opt:cfg}.json):DB_CONNECTOR}
+    DB_USERNAME: ${file(config.${opt:cfg}.json):DB_USERNAME}
+    DB_PASSWORD: ${file(config.${opt:cfg}.json):DB_PASSWORD}
+    DB_HOST: ${file(config.${opt:cfg}.json):DB_HOST}
+    DB_NAME: ${file(config.${opt:cfg}.json):DB_NAME}
+    RT_EXPIRATION: ${file(config.${opt:cfg}.json):RT_EXPIRATION}
+    AT_EXPIRATION: ${file(config.${opt:cfg}.json):AT_EXPIRATION}
+    JWT_EXPIRATION: ${file(config.${opt:cfg}.json):JWT_EXPIRATION}
+    JWT_SECRET: ${file(config.${opt:cfg}.json):JWT_SECRET}
+
+functions:
+  app:
+    handler: wsgi_handler.handler
+    layers:
+      - {Ref: PythonRequirementsLambdaLayer}
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors: true
+
+
+

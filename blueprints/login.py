@@ -20,7 +20,7 @@ JWT_SECRET = os.environ.get('JWT_SECRET')
 #############################################################################
 #                                  ROUTES                                   #
 #############################################################################
-@bp.route('/login', methods=['GET'])
+@bp.route('/login', methods=['POST'])
 def login():
     payload = request.get_json()
     validate_instance(payload=payload, schema=login_schema)
@@ -44,8 +44,8 @@ def login():
         access_token.user = user
         access_token.expiration_date = datetime.utcnow() + timedelta(seconds=AT_EXPIRATION)
 
-        models.db.add(refresh_token)
-        models.db.add(access_token)
+        models.db.session.add(refresh_token)
+        models.db.session.add(access_token)
         try:
             models.db.session.commit()
         except Exception:
@@ -80,18 +80,21 @@ def login():
     }
 
     return {
-        'acess_token': jwt.encode(at_jwt, JWT_SECRET, algorithm='HS512'),
-        'refresh_token': jwt.encode(rt_jwt, JWT_SECRET, algorithm='HS512'),
+        'acess_token': jwt.encode(at_jwt, JWT_SECRET, algorithm='HS256').decode('utf-8'),
+        'refresh_token': jwt.encode(rt_jwt, JWT_SECRET, algorithm='HS256').decode('utf-8'),
         'expires_in': JWT_EXPIRATION
     }
 
 
-@bp.route('/logoff', methods=['GET'])
+@bp.route('/logoff', methods=['POST'])
 def logoff():
     token = request.headers.get('Authorization', None)
-    token_id = token.replace('Bearer ', '')
+    token_id = token.replace('Bearer ', '') if token.startswith('Bearer ') else None
+
     if not token_id:
         abort(400)
+
+    token_id = jwt.decode(token_id, JWT_SECRET, algorithms=['HS256']).get('sub')
 
     access_token = models.AccessToken.query.get(token_id)
     if not access_token or not access_token.is_active:
@@ -99,11 +102,11 @@ def logoff():
 
     refresh_token = access_token.refresh_token
     refresh_token.valid = False
-    models.db.add(refresh_token)
+    models.db.session.add(refresh_token)
 
     for at in refresh_token.access_tokens:
         at.valid = False
-        models.db.add(at)
+        models.db.session.add(at)
 
     models.db.session.commit()
 

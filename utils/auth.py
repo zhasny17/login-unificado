@@ -1,0 +1,45 @@
+from flask import request, abort
+from functools import wraps
+import jwt
+import os
+import models
+
+JWT_SECRET = os.environ['JWT_SECRET']
+
+
+def check_token():
+    bearer_token = request.headers.get('Authorization')
+    if not bearer_token.startswith("Bearer ") and len(bearer_token.split()) != 2:
+        return None
+    token = bearer_token.split()[1]
+    try:
+        access_token_id = jwt.decode(token, JWT_SECRET, algorithm='HS256').get("sub")
+        access_token = models.AccessToken.query.get(access_token_id)
+        if not access_token or not access_token.is_active():
+            return None
+        user = access_token.user
+        return user
+    except Exception:
+        return None
+
+
+def authenticate_admin(f):
+    @wraps(f)
+    def authenticate(*args, **kwargs):
+        user = check_token()
+        if not user:
+            abort(401)
+        if not user.admin:
+            abort(403)
+        return f(*args, **kwargs)
+    return authenticate
+
+
+def authenticate_user(f):
+    @wraps(f)
+    def authenticate(*args, **kwargs):
+        user = check_token()
+        if not user:
+            abort(401)
+        return f(*args, **kwargs)
+    return authenticate

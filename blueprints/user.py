@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, request
+from flask import Blueprint, abort, request, jsonify, make_response
 from datetime import datetime
 import models
 from . import user_schema_insert, user_schema_update, validate_instance, return_no_content
@@ -51,7 +51,7 @@ def getAll():
     users = models.User.query.paginate(page=page, per_page=page_size).items
     for index, user in enumerate(users):
         users[index] = jsonify_user(user)
-    return {'users': users}
+    return jsonify({'users': users})
 
 
 @bp.route('/users', methods=["POST"])
@@ -78,7 +78,8 @@ def getOne(user_id):
     user = models.User.query.get(user_id)
     if not user:
         abort(404)
-    return jsonify_user(user)
+    response = jsonify_user(user)
+    return jsonify(response)
 
 
 @bp.route('/users/<string:user_id>', methods=["PUT"])

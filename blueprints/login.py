@@ -2,7 +2,7 @@ import os
 import jwt
 import models
 from datetime import datetime, timedelta
-from flask import Blueprint, request, abort
+from flask import Blueprint, request, abort, jsonify
 from . import login_schema, validate_instance, return_no_content
 #############################################################################
 #                                 VARIABLES                                 #                                                     
@@ -79,11 +79,12 @@ def login():
         'exp': datetime.utcnow() + timedelta(seconds=JWT_EXPIRATION)
     }
 
-    return {
+    response = {
         'acess_token': jwt.encode(at_jwt, JWT_SECRET, algorithm='HS256').decode('utf-8'),
         'refresh_token': jwt.encode(rt_jwt, JWT_SECRET, algorithm='HS256').decode('utf-8'),
         'expires_in': JWT_EXPIRATION
     }
+    return jsonify(response)
 
 
 @bp.route('/logoff', methods=['POST'])

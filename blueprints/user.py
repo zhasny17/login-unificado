@@ -14,7 +14,6 @@ bp = Blueprint('user', __name__)
 #                             HELPER FUNCTIONS                              #
 #############################################################################
 def jsonify_user(user):
-    fmt_str = '%Y-%m-%d %H:%M:%S'
     return {
         'id': user.id,
         'name': user.name,

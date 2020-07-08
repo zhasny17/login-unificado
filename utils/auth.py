@@ -1,10 +1,14 @@
-from flask import request, abort
+from flask import request, abort, g
 from functools import wraps
 import jwt
 import os
 import models
 
 JWT_SECRET = os.environ['JWT_SECRET']
+
+#############################################################################
+#                             HELPER FUNCTIONS                              #
+#############################################################################
 
 
 def check_token():
@@ -17,11 +21,27 @@ def check_token():
         access_token = models.AccessToken.query.get(access_token_id)
         if not access_token or not access_token.is_active():
             return None
+        g.token = access_token
         user = access_token.user
         return user
     except Exception:
         return None
 
+
+def get_user():
+    token = g.get('token')
+    user = token.user
+    return user
+
+
+def get_token():
+    token = g.get('token')
+    return token
+
+
+#############################################################################
+#                 AUTHENTICATION DECORATORS FUNCTIONS                       #
+#############################################################################
 
 def authenticate_admin(f):
     @wraps(f)

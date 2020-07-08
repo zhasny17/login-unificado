@@ -2,6 +2,7 @@ from flask import Blueprint, abort, request, jsonify, make_response
 from datetime import datetime
 import models
 from . import user_schema_insert, user_schema_update, validate_instance, return_no_content
+from utils import auth
 
 #############################################################################
 #                                 VARIABLES                                 #
@@ -13,7 +14,6 @@ bp = Blueprint('user', __name__)
 #                             HELPER FUNCTIONS                              #
 #############################################################################
 def jsonify_user(user):
-    fmt_str = '%Y-%m-%d %H:%M:%S'
     return {
         'id': user.id,
         'name': user.name,
@@ -36,6 +36,7 @@ def hello():
 
 
 @bp.route('/users', methods=["GET"])
+@auth.authenticate_user
 def getAll():
     page = request.args.get('page', 1)
     page_size = request.args.get('pagesize', 1000)
@@ -55,6 +56,7 @@ def getAll():
 
 
 @bp.route('/users', methods=["POST"])
+@auth.authenticate_admin
 def insert():
     user_body = request.json
     validate_instance(body=user_body, schema=user_schema_insert)
@@ -74,6 +76,7 @@ def insert():
 
 
 @bp.route('/users/<string:user_id>', methods=["GET"])
+@auth.authenticate_user
 def getOne(user_id):
     user = models.User.query.get(user_id)
     if not user:
@@ -83,6 +86,7 @@ def getOne(user_id):
 
 
 @bp.route('/users/<string:user_id>', methods=["PUT"])
+@auth.authenticate_admin
 def update(user_id):
     user_body = request.json
     validate_instance(body=user_body, schema=user_schema_update)
@@ -102,6 +106,7 @@ def update(user_id):
 
 
 @bp.route('/users/<string:user_id>', methods=["DELETE"])
+@auth.authenticate_admin
 def remove(user_id):
     user = models.User.query.get(user_id)
     if not user:

@@ -1,8 +1,9 @@
-from flask import Blueprint, abort, request, jsonify, make_response
+from flask import Blueprint, request, jsonify, make_response
 from datetime import datetime
 import models
 from . import user_schema_insert, user_schema_update, validate_instance, return_no_content
 from utils import auth
+from utils.error_handler import BadRequestException, ConflictException, NotFoundException
 
 #############################################################################
 #                                 VARIABLES                                 #
@@ -48,7 +49,7 @@ def getAll():
         if page_size < 1:
             page_size = 1
     except Exception:
-        abort(400)
+        raise BadRequestException(message='Erro no recebimento dos parametros de paginacao')
     users = models.User.query.paginate(page=page, per_page=page_size).items
     for index, user in enumerate(users):
         users[index] = jsonify_user(user)
@@ -72,7 +73,7 @@ def insert():
     except Exception as err:
         print(f'Erro ao inserir usuario: {err}')
         models.db.session.rollback()
-        abort(409)
+        raise ConflictException(message='Conflito no banco de dados')
 
 
 @bp.route('/users/<string:user_id>', methods=["GET"])
@@ -80,7 +81,7 @@ def insert():
 def getOne(user_id):
     user = models.User.query.get(user_id)
     if not user:
-        abort(404)
+        raise NotFoundException(message='usuario nao encontrado')
     response = jsonify_user(user)
     return jsonify(response)
 
@@ -92,7 +93,7 @@ def update(user_id):
     validate_instance(body=user_body, schema=user_schema_update)
     user = models.User.query.get(user_id)
     if not user:
-        abort(404)
+        raise NotFoundException(message='usuario nao encontrado')
     user.username = user_body.get('username')
     user.name = user_body.get('name')
     models.db.session.add(user)
@@ -102,7 +103,7 @@ def update(user_id):
     except Exception as err:
         print(f'Erro ao inserir usuario: {err}')
         models.db.session.rollback()
-        abort(409)
+        raise ConflictException(message='Conflito no banco de dados')
 
 
 @bp.route('/users/<string:user_id>', methods=["DELETE"])
@@ -110,7 +111,7 @@ def update(user_id):
 def remove(user_id):
     user = models.User.query.get(user_id)
     if not user:
-        abort(404)
+        raise NotFoundException(message='usuario nao encontrado')
     user.removed = True
     user.removed_at = datetime.utcnow()
     models.db.session.add(user)
@@ -119,5 +120,5 @@ def remove(user_id):
     except Exception as err:
         print(f'Erro ao remover usuario{err}')
         models.db.session.rollback()
-        abort(409)
+        raise ConflictException(message='Conflito no banco de dados')
     return return_no_content()

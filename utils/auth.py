@@ -1,8 +1,9 @@
-from flask import request, abort, g
+from flask import request, g
 from functools import wraps
 import jwt
 import os
 import models
+from utils.error_handler import UnauthorizedException, ForbiddenException
 
 JWT_SECRET = os.environ['JWT_SECRET']
 
@@ -48,9 +49,9 @@ def authenticate_admin(f):
     def authenticate(*args, **kwargs):
         user = check_token()
         if not user:
-            abort(401)
+            raise UnauthorizedException(message='Nao autorizado')
         if not user.admin:
-            abort(403)
+            raise ForbiddenException(message='Permissoes insuficientes')
         return f(*args, **kwargs)
     return authenticate
 
@@ -60,6 +61,6 @@ def authenticate_user(f):
     def authenticate(*args, **kwargs):
         user = check_token()
         if not user:
-            abort(401)
+            raise UnauthorizedException(message='Nao autorizado')
         return f(*args, **kwargs)
     return authenticate

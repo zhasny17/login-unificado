@@ -2,6 +2,7 @@ from flask import Flask
 import os
 from blueprints import user, login
 import models
+from utils import error_handler
 
 
 def create_app(config=None):
@@ -21,6 +22,8 @@ def create_app(config=None):
 
     models.db.init_app(app=app)
     models.migrate.init_app(app=app)
+
+    error_handler(app=app)
 
     # NOTE register blueprints
     app.register_blueprint(user.bp)

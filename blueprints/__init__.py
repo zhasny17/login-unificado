@@ -1,7 +1,8 @@
 import json
-from flask import make_response, abort
+from flask import make_response
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
+from utils.error_handler import BadRequestException
 
 with open('utils/schemas.json', 'r') as f:
     schema = json.load(f)
@@ -15,7 +16,7 @@ def validate_instance(payload, schema):
         validate(instance=payload, schema=schema)
     except ValidationError as err:
         print(f'Payload invalido: {err.message}')
-        abort(400)
+        raise BadRequestException(message=f'Payload invalido: {err.message}')
 
 
 def return_no_content():

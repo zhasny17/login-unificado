@@ -58,6 +58,8 @@ functions:
           method: ANY
           cors: true
           private: true
-
-
-
+      - http:
+          path: /users/request/upload/{proxy+}
+          method: ANY
+          cors: true
+          private: true

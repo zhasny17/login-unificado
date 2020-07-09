@@ -8,5 +8,8 @@
     "AT_EXPIRATION": "",
     "JWT_EXPIRATION": "",
     "JWT_SECRET": "",
-    "SYSTEM_API_KEY": ""
+    "SYSTEM_API_KEY": "",
+    "UPLOAD_BUCKET_NAME": "",
+    "UPLOAD_URL_EXPIRATION": "",
+    "UPLOAD_BUCKET_ENDPOINT": ""
 }

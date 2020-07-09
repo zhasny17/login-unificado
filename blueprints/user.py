@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, make_response
 from datetime import datetime
 import models
 from . import user_schema_insert, user_schema_update, validate_instance, return_no_content
-from utils import auth
+from utils import auth, upload_handler
 from utils.error_handler import BadRequestException, ConflictException, NotFoundException
 
 #############################################################################
@@ -138,3 +138,13 @@ def istrospect():
         raise NotFoundException(message='Token invalido')
 
     return jsonify_user(token.user)
+
+
+@bp.route('/users/request/upload/<string:image_name>', methods=['POST'])
+def generate_upload_link(image_name):
+    upload_obj = upload_handler.upload_image(imageName=image_name)
+
+    if not upload_obj:
+        raise BadRequestException(message='Erro ao gerar link de upload de imagem')
+
+    return jsonify(upload_obj)

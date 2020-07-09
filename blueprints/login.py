@@ -2,10 +2,12 @@ import os
 import jwt
 import models
 from datetime import datetime, timedelta
-from flask import Blueprint, request, abort, jsonify
+from flask import Blueprint, request, jsonify
 from . import login_schema, validate_instance, return_no_content
+from utils import auth
+from utils.error_handler import NotFoundException, ConflictException, BadRequestException, UnauthorizedException
 #############################################################################
-#                                 VARIABLES                                 #                                                     
+#                                 VARIABLES                                 #
 #############################################################################
 bp = Blueprint('login', __name__)
 
@@ -33,7 +35,7 @@ def login():
 
         user = models.User.query.filter_by(username=username, password=password, active=True, removed=False).first()
         if not user:
-            abort(404)
+            raise UnauthorizedException(message='Nao autorizado')
 
         refresh_token = models.RefreshToken()
         refresh_token.user = user
@@ -50,13 +52,13 @@ def login():
             models.db.session.commit()
         except Exception:
             models.db.rollback()
-            abort(409)
+            raise ConflictException(message='Conflito no banco de dados')
 
     if grant_type == 'refresh_token':
         refresh_token_id = payload.get('refresh_token')
         refresh_token = models.RefreshToken.query.get(refresh_token_id)
         if not refresh_token or not refresh_token.is_active:
-            abort(404)
+            raise UnauthorizedException(message='Nao autorizado')
 
         access_token = models.AccessToken()
         access_token.refresh_token = refresh_token
@@ -66,9 +68,9 @@ def login():
         models.db.add(access_token)
         try:
             models.db.session.commit()
-        except Exception as ex:
+        except Exception:
             models.db.rollback()
-            abort(409)
+            raise ConflictException(message='Conflito no banco de dados')
 
     at_jwt = {
         'sub': access_token.id,
@@ -88,18 +90,9 @@ def login():
 
 
 @bp.route('/logoff', methods=['POST'])
+@auth.authenticate_user
 def logoff():
-    token = request.headers.get('Authorization', None)
-    token_id = token.replace('Bearer ', '') if token.startswith('Bearer ') else None
-
-    if not token_id:
-        abort(400)
-
-    token_id = jwt.decode(token_id, JWT_SECRET, algorithms=['HS256']).get('sub')
-
-    access_token = models.AccessToken.query.get(token_id)
-    if not access_token or not access_token.is_active:
-        abort(404)
+    access_token = auth.get_token()
 
     refresh_token = access_token.refresh_token
     refresh_token.valid = False

@@ -7,5 +7,6 @@
     "RT_EXPIRATION": "",
     "AT_EXPIRATION": "",
     "JWT_EXPIRATION": "",
-    "JWT_SECRET": ""
+    "JWT_SECRET": "",
+    "SYSTEM_API_KEY": ""
 }

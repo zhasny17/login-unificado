@@ -27,6 +27,11 @@ provider:
   region: ${opt:region, 'us-east-1'}
   memorySize: 256
   timeout: 30
+  apiKeys:
+    - name: loginUnificadoApiKey
+      value: ${file(config.${opt:cfg}.json):SYSTEM_API_KEY}
+      description: API key para rotas não autenticaveis
+
   environment:
     DB_CONNECTOR: ${file(config.${opt:cfg}.json):DB_CONNECTOR}
     DB_USERNAME: ${file(config.${opt:cfg}.json):DB_USERNAME}
@@ -48,6 +53,11 @@ functions:
           path: /{proxy+}
           method: ANY
           cors: true
+      - http:
+          path: /users/introspect/{proxy+}
+          method: ANY
+          cors: true
+          private: true
 
 
 

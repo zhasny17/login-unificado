@@ -122,3 +122,19 @@ def remove(user_id):
         models.db.session.rollback()
         raise ConflictException(message='Conflito no banco de dados')
     return return_no_content()
+
+
+@bp.route('/users/introspect', methods=['POST'])
+def istrospect():
+    payload = request.get_json()
+
+    if 'token 'not in payload:
+        raise BadRequestException(message='Necessario informar o token de acesso')
+
+    token = payload.get('token')
+
+    token = models.AccessToken.query.filter_by(id=token).first()
+    if not token or not token.is_active():
+        raise NotFoundException(message='Token invalido')
+
+    return jsonify_user(token.user)

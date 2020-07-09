@@ -1,7 +1,7 @@
 """adm populate
 
 Revision ID: 5af1d6c6ffdf
-Revises: 
+Revises:
 Create Date: 2020-06-30 14:53:02.782245
 
 """
@@ -17,6 +17,7 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
+
 def upgrade():
     users_table = op.create_table(
         'users',
@@ -30,11 +31,11 @@ def upgrade():
         sa.Column('updated_at', sa.DateTime(timezone=True)),
         sa.Column('removed_at', sa.DateTime(timezone=True)),
         sa.Column('removed', sa.Boolean(), nullable=False, default=False),
-        mysql_charset= 'utf8mb4',
+        mysql_charset='utf8mb4',
     )
 
     op.bulk_insert(
-        users_table, 
+        users_table,
         [
             {
                 'id': str(uuid.uuid4()),
@@ -59,7 +60,7 @@ def upgrade():
         sa.Column('valid', sa.Boolean, nullable=False, default=True),
         sa.Column('expiration_date', sa.DateTime(timezone=True), nullable=False),
         sa.Column('user_id', sa.String(36), sa.ForeignKey('users.id'), nullable=False),
-        mysql_charset= 'utf8mb4',
+        mysql_charset='utf8mb4',
     )
 
     op.create_table(
@@ -70,7 +71,7 @@ def upgrade():
         sa.Column('expiration_date', sa.DateTime(timezone=True), nullable=False),
         sa.Column('user_id', sa.String(36), sa.ForeignKey('users.id'), nullable=False),
         sa.Column('refresh_token_id', sa.String(36), sa.ForeignKey('refresh_tokens.id'), nullable=False),
-        mysql_charset= 'utf8mb4',
+        mysql_charset='utf8mb4',
     )
 
 

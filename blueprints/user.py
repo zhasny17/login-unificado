@@ -21,6 +21,7 @@ def jsonify_user(user):
         'username': user.username,
         'active': user.active,
         'admin': user.admin,
+        'photo_url': user.photo_url,
         'created_at': user.created_at,
         'removed_at': user.removed_at,
         'updated_at': user.updated_at,
@@ -65,6 +66,7 @@ def insert():
     user = models.User()
     user.username = user_body.get('username')
     user.name = user_body.get('name')
+    user.photo_url = user_body.get('photo_url')
     user.password = models.User.hash_password(password)
     models.db.session.add(user)
     try:
@@ -148,3 +150,23 @@ def generate_upload_link(image_name):
         raise BadRequestException(message='Erro ao gerar link de upload de imagem')
 
     return jsonify(upload_obj)
+
+
+@bp.route('users/change/photo', methods=['POST'])
+@auth.authenticate_user
+def change_photo():
+    payload = request.get_json()
+
+    if 'new_photo_url' not in payload:
+        raise BadRequestException(message='Necessario informar uma nova url de foto')
+
+    user = auth.get_user()
+
+    user.photo_url = payload.get('new_photo_url')
+
+    models.db.session.add(user)
+    try:
+        models.db.session.commit()
+        return return_no_content()
+    except Exception:
+        raise ConflictException(message='Conflito no banco de dados')

@@ -30,10 +30,11 @@ class User(db.Model):
 
     id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
     name = db.Column(db.String(150), nullable=False)
-    username = db.Column(db.String(150), nullable=False)
+    username = db.Column(db.String(150), nullable=False, unique=True)
     password = db.Column(db.String(150), nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
     active = db.Column(db.Boolean, nullable=False, default=True)
+    photo_url = db.Column(db.String(150), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
     updated_at = db.Column(db.DateTime(timezone=True))
     removed_at = db.Column(db.DateTime(timezone=True))

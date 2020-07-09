@@ -5,7 +5,7 @@ import os
 import models
 from utils.error_handler import UnauthorizedException, ForbiddenException
 
-JWT_SECRET = os.environ['JWT_SECRET']
+JWT_SECRET = os.environ.get('JWT_SECRET')
 
 #############################################################################
 #                             HELPER FUNCTIONS                              #

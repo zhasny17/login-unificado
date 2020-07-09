@@ -10,6 +10,9 @@
             },
             "password": {
                 "type": "string"
+            },
+            "photo_url": {
+                "type": "string"
             }
         },
         "additionalProperties": false,

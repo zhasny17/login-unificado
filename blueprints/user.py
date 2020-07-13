@@ -4,6 +4,7 @@ import models
 from . import user_schema_insert, user_schema_update, validate_instance, return_no_content
 from utils import auth, upload_handler
 from utils.error_handler import BadRequestException, ConflictException, NotFoundException
+from utils.auth import decode_jwt
 
 #############################################################################
 #                                 VARIABLES                                 #
@@ -61,7 +62,7 @@ def getAll():
 @auth.authenticate_admin
 def insert():
     user_body = request.json
-    validate_instance(body=user_body, schema=user_schema_insert)
+    validate_instance(payload=user_body, schema=user_schema_insert)
     password = user_body.get('password')
     user = models.User()
     user.username = user_body.get('username')
@@ -92,7 +93,7 @@ def getOne(user_id):
 @auth.authenticate_admin
 def update(user_id):
     user_body = request.json
-    validate_instance(body=user_body, schema=user_schema_update)
+    validate_instance(payload=user_body, schema=user_schema_update)
     user = models.User.query.get(user_id)
     if not user:
         raise NotFoundException(message='usuario nao encontrado')
@@ -129,17 +130,19 @@ def remove(user_id):
 @bp.route('/users/introspect', methods=['POST'])
 def istrospect():
     payload = request.get_json()
-
-    if 'token 'not in payload:
+    if 'token' not in payload:
         raise BadRequestException(message='Necessario informar o token de acesso')
 
     token = payload.get('token')
-
-    token = models.AccessToken.query.filter_by(id=token).first()
-    if not token or not token.is_active():
+    access_token_id = decode_jwt(token)
+    if not access_token_id:
+        raise BadRequestException(message='Token invalido')
+    access_token = models.AccessToken.query.filter_by(id=access_token_id).first()
+    if not access_token:
         raise NotFoundException(message='Token invalido')
-
-    return jsonify_user(token.user)
+    if not access_token.is_active():
+        raise BadRequestException(message='Token invalido')
+    return jsonify_user(access_token.user)
 
 
 @bp.route('/users/request/upload/<string:image_name>', methods=['POST'])
@@ -152,7 +155,7 @@ def generate_upload_link(image_name):
     return jsonify(upload_obj)
 
 
-@bp.route('users/change/photo', methods=['POST'])
+@bp.route('/users/change/photo', methods=['POST'])
 @auth.authenticate_user
 def change_photo():
     payload = request.get_json()

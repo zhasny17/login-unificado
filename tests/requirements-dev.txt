@@ -1,0 +1,3 @@
+pytest==5.4.3
+covarage==5.2
+freezegun==0.3.15

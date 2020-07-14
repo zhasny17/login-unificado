@@ -51,7 +51,7 @@ def send_email(user_id, username):
         template = jinja2.Template(f.read())
 
     html = template.render(
-        url=f'{SYSTEM_BASE_URL}/{user_id}/reset/password'
+        url=f'{SYSTEM_BASE_URL}/users/{user_id}/reset/password'
     )
 
     message = MIMEText(html, 'html')

@@ -1,19 +1,31 @@
 from flask import Blueprint, request, jsonify, make_response
 from datetime import datetime
 import models
-from . import user_schema_insert, user_schema_update, validate_instance, return_no_content
+from . import user_schema_insert, user_schema_update, change_pass_schema, reset_pass_schema, validate_instance, return_no_content
 from utils import auth, upload_handler
-from utils.error_handler import BadRequestException, ConflictException, NotFoundException
+from utils.error_handler import BadRequestException, ConflictException, NotFoundException, ForbiddenException
+import smtplib
+import ssl
+import os
+
 
 #############################################################################
 #                                 VARIABLES                                 #
 #############################################################################
 bp = Blueprint('user', __name__)
 
+SMTP_SERVER = os.environ.get('SMTP_SERVER')
+SMTP_PORT = os.environ.get('SMTP_PORT')
+SMTP_USER_EMAIL = os.environ.get('SMTP_USER_EMAIL')
+SMTP_USER_PASSWORD = os.environ.get('SMTP_USER_PASSWORD')
+
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
 
 #############################################################################
 #                             HELPER FUNCTIONS                              #
 #############################################################################
+
+
 def jsonify_user(user):
     return {
         'id': user.id,
@@ -28,6 +40,19 @@ def jsonify_user(user):
         'removed': user.removed
     }
 
+
+def send_email(user_id, username):
+    MESSAGE = ''
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp_client:
+            smtp_client.starttls(context=context)
+            smtp_client.login(SMTP_USER_EMAIL, SMTP_USER_PASSWORD)
+
+            smtp_client.sendmail(SENDER_EMAIL, username, MESSAGE)
+    except Exception:
+        raise Exception
 
 #############################################################################
 #                                  ROUTES                                   #
@@ -82,7 +107,7 @@ def insert():
 @auth.authenticate_user
 def getOne(user_id):
     user = models.User.query.get(user_id)
-    if not user:
+    if not user or user.removed:
         raise NotFoundException(message='usuario nao encontrado')
     response = jsonify_user(user)
     return jsonify(response)
@@ -94,7 +119,7 @@ def update(user_id):
     user_body = request.json
     validate_instance(body=user_body, schema=user_schema_update)
     user = models.User.query.get(user_id)
-    if not user:
+    if not user or user.removed or not user.active:
         raise NotFoundException(message='usuario nao encontrado')
     user.username = user_body.get('username')
     user.name = user_body.get('name')
@@ -112,7 +137,7 @@ def update(user_id):
 @auth.authenticate_admin
 def remove(user_id):
     user = models.User.query.get(user_id)
-    if not user:
+    if not user or user.removed:
         raise NotFoundException(message='usuario nao encontrado')
     user.removed = True
     user.removed_at = datetime.utcnow()
@@ -170,3 +195,82 @@ def change_photo():
         return return_no_content()
     except Exception:
         raise ConflictException(message='Conflito no banco de dados')
+
+
+@bp.route('/users/change/password', methods=['POST'])
+@auth.authenticate_user
+def change_pass():
+    payload = request.get_json()
+
+    validate_instance(payload=payload, schema=change_pass_schema)
+
+    current_password = payload.get('current_password')
+    new_password = payload.get('new_password')
+
+    user = auth.get_user()
+
+    if user.password != models.User.hash_password(current_password):
+        raise ConflictException(message='Informacoes invalidas')
+
+    user.password = models.User.hash_password(new_password)
+
+    models.db.session.add(user)
+
+    models.db.session.commit()
+
+    return return_no_content()
+
+
+@bp.route('/users/email/reset/password', methods=['GET'])
+@auth.authenticate_user
+def send_email_to_reset_pass():
+    user = auth.get_user()
+    user_id = user.id
+    username = user.username
+    send_email(user_id=user_id, username=username)
+    return return_no_content()
+
+
+@bp.route('/users/<string:user_id>/reset/password', methods=['POST'])
+def reset_pass(user_id):
+    payload = request.get_json()
+
+    validate_instance(payload=payload, schema=reset_pass_schema)
+
+    first_new_password = payload.get('first_new_password')
+    second_new_password = payload.get('second_new_password')
+
+    user = models.User.query.get(user_id)
+
+    if not user or user.removed or not user.active:
+        raise NotFoundException(message='Usuario invalido')
+
+    if first_new_password != second_new_password:
+        raise ConflictException(message='Informacoes invalidas')
+
+    user.password = models.User.hash_password(first_new_password)
+
+    models.db.session.add(user)
+
+    models.db.session.commit()
+
+    return return_no_content()
+
+
+@bp.route('/users/active', methods=['POST'])
+@auth.authenticate_user
+def reset_pass(user_id):
+    user = auth.get_user()
+
+    if not user or user.removed:
+        raise NotFoundException(message='Usuario invalido')
+
+    actual_status = user.active
+
+    user.active = not actual_status
+
+    models.db.session.add(user)
+
+    models.db.session.commit()
+
+    return return_no_content()

@@ -63,3 +63,8 @@ functions:
           method: ANY
           cors: true
           private: true
+      - http:
+          path: /users/{proxy+}/reset/password
+          method: ANY
+          cors: true
+          private: true

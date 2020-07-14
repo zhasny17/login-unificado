@@ -9,6 +9,8 @@ with open('utils/schemas.json', 'r') as f:
     user_schema_insert = schema.get('user_schema_insert')
     user_schema_update = schema.get('user_schema_update')
     login_schema = schema.get('login_schema')
+    change_pass_schema = schema.get('change_pass_schema')
+    reset_pass_schema = schema.get('reset_pass_schema')
 
 
 def validate_instance(payload, schema):

@@ -5,8 +5,10 @@ from . import user_schema_insert, user_schema_update, change_pass_schema, reset_
 from utils import auth, upload_handler
 from utils.error_handler import BadRequestException, ConflictException, NotFoundException, ForbiddenException
 import smtplib
+from email.mime.text import MIMEText
 import ssl
 import os
+import jinja2
 
 
 #############################################################################
@@ -20,6 +22,8 @@ SMTP_USER_EMAIL = os.environ.get('SMTP_USER_EMAIL')
 SMTP_USER_PASSWORD = os.environ.get('SMTP_USER_PASSWORD')
 
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL')
+
+SYSTEM_BASE_URL = os.environ.get('SYSTEM_BASE_URL')
 
 #############################################################################
 #                             HELPER FUNCTIONS                              #
@@ -42,17 +46,24 @@ def jsonify_user(user):
 
 
 def send_email(user_id, username):
-    MESSAGE = ''
 
+    with open('./reset-password.html', 'r') as f:
+        template = jinja2.Template(f.read())
+
+    html = template.render(
+        url=f'{SYSTEM_BASE_URL}/{user_id}/reset/password'
+    )
+
+    message = MIMEText(html, 'html')
     try:
         context = ssl.create_default_context()
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp_client:
             smtp_client.starttls(context=context)
             smtp_client.login(SMTP_USER_EMAIL, SMTP_USER_PASSWORD)
 
-            smtp_client.sendmail(SENDER_EMAIL, username, MESSAGE)
+            smtp_client.sendmail(SENDER_EMAIL, username, message)
     except Exception:
-        raise Exception
+        raise BadRequestException(message='Erro no envio do email')
 
 #############################################################################
 #                                  ROUTES                                   #

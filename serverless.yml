@@ -45,6 +45,7 @@ provider:
     UPLOAD_BUCKET_NAME: ${file(config.${opt:cfg}.json):UPLOAD_BUCKET_NAME}
     UPLOAD_URL_EXPIRATION: ${file(config.${opt:cfg}.json):UPLOAD_URL_EXPIRATION}
     UPLOAD_BUCKET_ENDPOINT: ${file(config.${opt:cfg}.json):UPLOAD_BUCKET_ENDPOINT}
+    SYSTEM_BASE_URL: ${file(config.${opt:cfg}.json):SYSTEM_BASE_URL}
 
 functions:
   app:

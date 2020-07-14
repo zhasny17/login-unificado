@@ -42,6 +42,9 @@ provider:
     AT_EXPIRATION: ${file(config.${opt:cfg}.json):AT_EXPIRATION}
     JWT_EXPIRATION: ${file(config.${opt:cfg}.json):JWT_EXPIRATION}
     JWT_SECRET: ${file(config.${opt:cfg}.json):JWT_SECRET}
+    UPLOAD_BUCKET_NAME: ${file(config.${opt:cfg}.json):UPLOAD_BUCKET_NAME}
+    UPLOAD_URL_EXPIRATION: ${file(config.${opt:cfg}.json):UPLOAD_URL_EXPIRATION}
+    UPLOAD_BUCKET_ENDPOINT: ${file(config.${opt:cfg}.json):UPLOAD_BUCKET_ENDPOINT}
 
 functions:
   app:

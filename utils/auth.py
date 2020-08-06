@@ -13,18 +13,27 @@ JWT_SECRET = os.environ.get('JWT_SECRET')
 
 
 def check_token():
+    if 'Authorization' not in request.headers:
+        return None
     bearer_token = request.headers.get('Authorization')
     if not bearer_token.startswith("Bearer ") and len(bearer_token.split()) != 2:
         return None
     token = bearer_token.split()[1]
+    access_token_id = decode_jwt(token)
+    if not access_token_id:
+        return None
+    access_token = models.AccessToken.query.get(access_token_id)
+    if not access_token or not access_token.is_active():
+        return None
+    g.token = access_token
+    user = access_token.user
+    return user
+
+
+def decode_jwt(token):
     try:
-        access_token_id = jwt.decode(token, JWT_SECRET, algorithm='HS256').get("sub")
-        access_token = models.AccessToken.query.get(access_token_id)
-        if not access_token or not access_token.is_active():
-            return None
-        g.token = access_token
-        user = access_token.user
-        return user
+        token_id = jwt.decode(token, JWT_SECRET, algorithm='HS256').get("sub")
+        return token_id
     except Exception:
         return None
 

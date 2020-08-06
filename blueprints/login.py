@@ -51,26 +51,32 @@ def login():
         try:
             models.db.session.commit()
         except Exception:
-            models.db.rollback()
+            models.db.session.rollback()
             raise ConflictException(message='Conflito no banco de dados')
 
-    if grant_type == 'refresh_token':
-        refresh_token_id = payload.get('refresh_token')
+    elif grant_type == 'refresh_token':
+        jwt_rt = payload.get('refresh_token')
+        if not jwt_rt:
+            raise UnauthorizedException(message='Nao autorizado')
+
+        refresh_token_id = auth.decode_jwt(jwt_rt)
         refresh_token = models.RefreshToken.query.get(refresh_token_id)
         if not refresh_token or not refresh_token.is_active:
             raise UnauthorizedException(message='Nao autorizado')
 
+        user = refresh_token.user
         access_token = models.AccessToken()
         access_token.refresh_token = refresh_token
         access_token.user = user
         access_token.expiration_date = datetime.utcnow() + timedelta(seconds=AT_EXPIRATION)
-
-        models.db.add(access_token)
+        models.db.session.add(access_token)
         try:
             models.db.session.commit()
         except Exception:
-            models.db.rollback()
+            models.db.session.rollback()
             raise ConflictException(message='Conflito no banco de dados')
+    else:
+        raise BadRequestException(message='Grant_type Inválido')
 
     at_jwt = {
         'sub': access_token.id,

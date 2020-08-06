@@ -1,0 +1,15 @@
+{
+    "DB_CONNECTOR": "",
+    "DB_USERNAME": "",
+    "DB_PASSWORD": "",
+    "DB_HOST": "",
+    "DB_NAME": "",
+    "RT_EXPIRATION": "",
+    "AT_EXPIRATION": "",
+    "JWT_EXPIRATION": "",
+    "JWT_SECRET": "",
+    "SYSTEM_API_KEY": "",
+    "UPLOAD_BUCKET_NAME": "",
+    "UPLOAD_URL_EXPIRATION": "",
+    "UPLOAD_BUCKET_ENDPOINT": ""
+}

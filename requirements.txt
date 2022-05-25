@@ -3,5 +3,5 @@ Flask-SQLAlchemy==2.4.0
 Flask-Migrate==2.5.2
 mysql-connector-python==8.0.17
 jsonschema==2.6.0
-pyjwt==1.7.1
+pyjwt==2.4.0
 boto3==1.14.20
